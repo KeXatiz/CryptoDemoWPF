@@ -14,9 +14,9 @@
         </Grid.RowDefinitions>
         
         <!-- input -->
-        <TextBox x:Name="txtInput" Height="80" TextWrapping="Wrap"
-                 AcceptsReturn="True"
-                  />
+        <TextBox x:Name="txtInput" Grid.Row="0" Height="80"
+                    TextWrapping="Wrap"
+                    AcceptsReturn="True"/>
         
         <!-- buttons -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10">
