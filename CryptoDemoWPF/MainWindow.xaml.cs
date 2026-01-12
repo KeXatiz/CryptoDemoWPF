@@ -25,6 +25,13 @@ namespace CryptoDemoWPF
 
         // 16 bytes IV (Aes block size)
         private readonly byte[] aesIV = Encoding.UTF8.GetBytes("abcdef1234567890");
+
+        // DES uses 8-byte key (64-bit, effective 56-bit)
+        private readonly byte[] desKey = Encoding.UTF8.GetBytes("12345678");
+        // Des block size = 8 bytes
+        private readonly byte[] desIV = Encoding.UTF8.GetBytes("abcdefgh");
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -76,6 +83,26 @@ namespace CryptoDemoWPF
             }
         }
 
+        private string HashSHA256(string input)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+                byte[] hashBytes = sha.ComputeHash(inputBytes);
+
+                // convert to Hex string
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hashBytes)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+                return sb.ToString();
+
+                //Text → UTF-8 bytes → SHA-256 → 32 bytes → Hex string
+            }
+        }
+
         private void EncryptAES_Click(object sender, RoutedEventArgs e)
         {
             txtOutput.Text = EncryptAES(txtInput.Text);
@@ -95,7 +122,36 @@ namespace CryptoDemoWPF
 
         private void Hash_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Hashing will be implemented next phase");
+            txtOutput.Text = HashSHA256(txtInput.Text);  //(64 hex characters)
+        }
+
+        private string HashSHA256WithSalt(String input, string salt)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] combined = Encoding.UTF8.GetBytes(input + salt);
+                byte[] hashBytes = sha.ComputeHash(combined);
+
+                //return Convert.ToHexString(hashBytes);
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hashBytes)
+                {
+                    sb.Append(b.ToString("x2"));
+                }
+
+                return sb.ToString();
+            }
+        }
+
+        private string GenerateSalt(int size = 16)
+        {
+            byte[] saltBytes = new byte[size];
+            using(var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(saltBytes);
+            }
+
+            return Convert.ToBase64String(saltBytes);
         }
     }
 }
