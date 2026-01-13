@@ -22,7 +22,14 @@
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10">
             <Button Content="Encrypt (AES)" Width="120" Margin="5" Click="EncryptAES_Click" />
             <Button Content="Decrypt (AES)" Width="120" Margin="5" Click="DecryptAES_Click" />
+            
             <Button Content="Hash (SHA256)" Width="120" Margin="5" Click="Hash_Click" />
+            <Button Content="Hash + Salt" Width="120" Margin="5" Click="HashSalt_Click"/>
+
+            <Button Content="Encrypt (DES)" Width="120" Margin="5" Click="EncryptDES_Click"/>
+            <Button Content="Decrypt (DES)" Width="120" Margin="5" Click="DecryptDES_Click"/>
+            
+            
         </StackPanel> 
         
         <!-- Output -->

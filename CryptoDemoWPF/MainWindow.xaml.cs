@@ -31,6 +31,10 @@ namespace CryptoDemoWPF
         // Des block size = 8 bytes
         private readonly byte[] desIV = Encoding.UTF8.GetBytes("abcdefgh");
 
+        // TDES uses 24-byte key (3 x DES keys)
+        private readonly byte[] tdesKey = Encoding.UTF8.GetBytes("123456781234567812345678");
+        // Same block size as DES (8 bytes)
+        private readonly byte[] tdesIV = Encoding.UTF8.GetBytes("abcdefgh");
 
         public MainWindow()
         {
@@ -152,6 +156,75 @@ namespace CryptoDemoWPF
             }
 
             return Convert.ToBase64String(saltBytes);
+        }
+
+        private void HashSalt_Click(object sender, RoutedEventArgs e)
+        {
+            string salt = GenerateSalt();
+            string hash = HashSHA256WithSalt(txtInput.Text, salt);
+
+            txtOutput.Text = $"Salt:\n{salt}\n\nHash:\n{hash}";
+        }
+
+        private string EncryptDES(string plainText)
+        {
+            using (DES des = DES.Create())
+            {
+                des.Key = desKey;
+                des.IV = desIV;
+                des.Mode = CipherMode.CBC;
+                des.Padding = PaddingMode.PKCS7;
+
+                byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+
+                using(var ms = new MemoryStream())
+                using(var cs = new CryptoStream(ms, des.CreateEncryptor(), CryptoStreamMode.Write)){
+                    cs.Write(plainBytes, 0, plainBytes.Length);
+                    cs.FlushFinalBlock();
+
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
+        private string DecryptDES(string cipherText)
+        {
+            using (DES des = DES.Create())
+            {
+                des.Key = desKey;
+                des.IV = desIV;
+                des.Mode = CipherMode.CBC;
+                des.Padding = PaddingMode.PKCS7;
+
+                byte[] cipherBytes = Convert.FromBase64String(cipherText);
+
+                using (var ms = new MemoryStream())
+                using (var cs = new CryptoStream(ms, des.CreateDecryptor(), CryptoStreamMode.Write))
+                {
+                    cs.Write(cipherBytes, 0, cipherBytes.Length);
+                    cs.FlushFinalBlock();
+
+                    return Encoding.UTF8.GetString(ms.ToArray());
+                }
+            }
+        }
+
+
+        private void EncryptDES_Click (object sender, RoutedEventArgs e)
+        {
+            txtOutput.Text = EncryptDES(txtInput.Text);
+        }
+
+        private void DecryptDES_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                txtOutput.Text = DecryptDES(txtOutput.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Invalid DES ciphertext or key/IV mismatch");
+            }
         }
     }
 }
