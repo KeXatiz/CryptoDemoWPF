@@ -124,11 +124,6 @@ namespace CryptoDemoWPF
             }
         }
 
-        private void Hash_Click(object sender, RoutedEventArgs e)
-        {
-            txtOutput.Text = HashSHA256(txtInput.Text);  //(64 hex characters)
-        }
-
         private string HashSHA256WithSalt(String input, string salt)
         {
             using (SHA256 sha = SHA256.Create())
@@ -156,14 +151,6 @@ namespace CryptoDemoWPF
             }
 
             return Convert.ToBase64String(saltBytes);
-        }
-
-        private void HashSalt_Click(object sender, RoutedEventArgs e)
-        {
-            string salt = GenerateSalt();
-            string hash = HashSHA256WithSalt(txtInput.Text, salt);
-
-            txtOutput.Text = $"Salt:\n{salt}\n\nHash:\n{hash}";
         }
 
         private string EncryptDES(string plainText)
@@ -210,6 +197,9 @@ namespace CryptoDemoWPF
         }
 
 
+        // TDES
+
+
         private void EncryptDES_Click (object sender, RoutedEventArgs e)
         {
             txtOutput.Text = EncryptDES(txtInput.Text);
@@ -226,5 +216,20 @@ namespace CryptoDemoWPF
                 MessageBox.Show("Invalid DES ciphertext or key/IV mismatch");
             }
         }
+
+        private void Hash_Click(object sender, RoutedEventArgs e)
+        {
+            txtOutput.Text = HashSHA256(txtInput.Text);  //(64 hex characters)
+        }
+
+        private void HashSalt_Click(object sender, RoutedEventArgs e)
+        {
+            string salt = GenerateSalt();
+            string hash = HashSHA256WithSalt(txtInput.Text, salt);
+
+            txtOutput.Text = $"Salt:\n{salt}\n\nHash:\n{hash}";
+        }
+
+        
     }
 }
