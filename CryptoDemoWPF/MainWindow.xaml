@@ -28,8 +28,11 @@
 
             <Button Content="Encrypt (DES)" Width="120" Margin="5" Click="EncryptDES_Click"/>
             <Button Content="Decrypt (DES)" Width="120" Margin="5" Click="DecryptDES_Click"/>
-            
-            
+
+            <Button Content="Encrypt (TDES)" Width="120" Margin="5 " Click="EncryptTDES_Click"/>
+            <Button Content="Decrypt (TDES)" Width="120" Margin="5" Click="DecryptTDES_Click"/>
+
+
         </StackPanel> 
         
         <!-- Output -->

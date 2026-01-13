@@ -32,7 +32,7 @@ namespace CryptoDemoWPF
         private readonly byte[] desIV = Encoding.UTF8.GetBytes("abcdefgh");
 
         // TDES uses 24-byte key (3 x DES keys)
-        private readonly byte[] tdesKey = Encoding.UTF8.GetBytes("123456781234567812345678");
+        private readonly byte[] tdesKey = Encoding.UTF8.GetBytes("12345678ABCDEFGH87654321");
         // Same block size as DES (8 bytes)
         private readonly byte[] tdesIV = Encoding.UTF8.GetBytes("abcdefgh");
 
@@ -198,7 +198,48 @@ namespace CryptoDemoWPF
 
 
         // TDES
+        private string EncryptTDES(string plainText)
+        {
+            using (TripleDES tdes = TripleDES.Create())
+            {
+                tdes.Key = tdesKey;
+                tdes.IV = tdesIV;
+                tdes.Mode = CipherMode.CBC;
+                tdes.Padding = PaddingMode.PKCS7;
 
+                byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+
+                using(var ms = new MemoryStream())
+                using(var cs = new CryptoStream(ms, tdes.CreateEncryptor(), CryptoStreamMode.Write))
+                {
+                    cs.Write(plainBytes, 0, plainBytes.Length);
+                    cs.FlushFinalBlock();
+
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
+        private string DecryptTDES(string cipherText)
+        {
+            using (TripleDES tdes = TripleDES.Create()) {
+                tdes.Key = tdesKey;
+                tdes.IV = tdesIV;
+                tdes.Mode = CipherMode.CBC;
+                tdes.Padding = PaddingMode.PKCS7;
+
+                byte[] cipherBytes = Convert.FromBase64String(cipherText);
+
+                using (var ms = new MemoryStream())
+                using (var cs = new CryptoStream(ms, tdes.CreateDecryptor(), CryptoStreamMode.Write))
+                {
+                    cs.Write(cipherBytes, 0, cipherBytes.Length);
+                    cs.FlushFinalBlock();
+
+                    return Encoding.UTF8.GetString(ms.ToArray());
+                }
+            }
+        }
 
         private void EncryptDES_Click (object sender, RoutedEventArgs e)
         {
@@ -230,6 +271,22 @@ namespace CryptoDemoWPF
             txtOutput.Text = $"Salt:\n{salt}\n\nHash:\n{hash}";
         }
 
+        private void EncryptTDES_Click(object sender, RoutedEventArgs e)
+        {
+            txtOutput.Text = EncryptTDES(txtInput.Text);
+        }
+
+        private void DecryptTDES_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                txtOutput.Text = DecryptTDES(txtOutput.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Invalid TDES ciphertext or key/IV mismatch");
+            }
+        }
         
     }
 }
