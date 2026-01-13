@@ -32,7 +32,7 @@
             <Button Content="Encrypt (TDES)" Width="120" Margin="5 " Click="EncryptTDES_Click"/>
             <Button Content="Decrypt (TDES)" Width="120" Margin="5" Click="DecryptTDES_Click"/>
 
-
+            <Button Content="Prove TDES = 3×DES" Width="160" Margin="5" Click="ProveTDES_Click"/>
         </StackPanel> 
         
         <!-- Output -->
