@@ -8,38 +8,59 @@
         Title="MainWindow" Height="500" Width="700">
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        
-        <!-- input -->
-        <TextBox x:Name="txtInput" Grid.Row="0" Height="80"
-                    TextWrapping="Wrap"
-                    AcceptsReturn="True"/>
-        
-        <!-- buttons -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10">
-            <Button Content="Encrypt (AES)" Width="120" Margin="5" Click="EncryptAES_Click" />
-            <Button Content="Decrypt (AES)" Width="120" Margin="5" Click="DecryptAES_Click" />
-            
-            <Button Content="Hash (SHA256)" Width="120" Margin="5" Click="Hash_Click" />
-            <Button Content="Hash + Salt" Width="120" Margin="5" Click="HashSalt_Click"/>
 
-            <Button Content="Encrypt (DES)" Width="120" Margin="5" Click="EncryptDES_Click"/>
-            <Button Content="Decrypt (DES)" Width="120" Margin="5" Click="DecryptDES_Click"/>
+        <!-- INPUT -->
+        <GroupBox Header="Input" FontWeight="Bold">
+            <TextBox x:Name="txtInput"
+                 Height="80"
+                 TextWrapping="Wrap"
+                 AcceptsReturn="True"/>
+        </GroupBox>
 
-            <Button Content="Encrypt (TDES)" Width="120" Margin="5 " Click="EncryptTDES_Click"/>
-            <Button Content="Decrypt (TDES)" Width="120" Margin="5" Click="DecryptTDES_Click"/>
+        <!-- ENCRYPT -->
+        <GroupBox Header="Encryption" Grid.Row="1" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Encrypt AES" Width="120" Margin="5" Click="EncryptAES_Click"/>
+                <Button Content="Encrypt DES" Width="120" Margin="5" Click="EncryptDES_Click"/>
+                <Button Content="Encrypt TDES" Width="120" Margin="5" Click="EncryptTDES_Click"/>
+            </StackPanel>
+        </GroupBox>
 
-            <Button Content="Prove TDES = 3×DES" Width="160" Margin="5" Click="ProveTDES_Click"/>
-        </StackPanel> 
-        
-        <!-- Output -->
-        <TextBox x:Name="txtOutput" Grid.Row="2" Height="150"
+        <!-- DECRYPT -->
+        <GroupBox Header="Decryption" Grid.Row="2" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Decrypt AES" Width="120" Margin="5" Click="DecryptAES_Click"/>
+                <Button Content="Decrypt DES" Width="120" Margin="5" Click="DecryptDES_Click"/>
+                <Button Content="Decrypt TDES" Width="120" Margin="5" Click="DecryptTDES_Click"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- HASHING -->
+        <GroupBox Header="Hashing (One-Way)" Grid.Row="3" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="SHA-256" Width="140" Margin="5" Click="Hash_Click"/>
+                <Button Content="SHA-256 + Salt" Width="160" Margin="5" Click="HashSalt_Click"/>
+                <Button Content="Prove TDES = 3×DES"
+                    Width="200"
+                    Margin="5"
+                    Background="#DFF0FF"
+                    Click="ProveTDES_Click"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- OUTPUT -->
+        <GroupBox Header="Output" Grid.Row="4" Margin="0,10,0,0">
+            <TextBox x:Name="txtOutput"
                  TextWrapping="Wrap"
                  AcceptsReturn="True"
                  IsReadOnly="True"/>
+        </GroupBox>
 
     </Grid>
 </Window>

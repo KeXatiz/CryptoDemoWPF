@@ -255,7 +255,7 @@ namespace CryptoDemoWPF
                 des.IV = desIV;
                 //des.Mode = CipherMode.CBC;
                 des.Mode = CipherMode.ECB;
-                des.Padding = PaddingMode.PKCS7;
+                des.Padding = PaddingMode.None;
 
                 using(var ms = new MemoryStream())
                 using(var cs = new CryptoStream(ms, des.CreateEncryptor(), CryptoStreamMode.Write))
@@ -275,7 +275,7 @@ namespace CryptoDemoWPF
                 des.IV = desIV;
                 //des.Mode = CipherMode.CBC;
                 des.Mode = CipherMode.ECB;
-                des.Padding = PaddingMode.PKCS7;
+                des.Padding = PaddingMode.None;
 
                 using(var ms = new MemoryStream())
                 using(var cs = new CryptoStream(ms, des.CreateDecryptor(), CryptoStreamMode.Write))
@@ -292,11 +292,46 @@ namespace CryptoDemoWPF
         {
             byte[] data = Encoding.UTF8.GetBytes(plainText);
 
+            // PAD ONCE
+            data = PadPkcs7(data, 8);
+
             byte[] step1 = DesEncryptBytes(data, k1);   // E(K1)
             byte[] step2 = DesDecryptBytes(step1, k2);  // D(K2)
             byte[] step3 = DesEncryptBytes(step2, k3);  // E(K3)
 
             return Convert.ToBase64String(step3);
+        }
+
+        private string EncryptTDES_ECB_ForProof(string plainText)
+        {
+            using (TripleDES tdes = TripleDES.Create())
+            {
+                tdes.Key = tdesKey;
+                tdes.Mode = CipherMode.ECB;   
+                tdes.Padding = PaddingMode.PKCS7;
+
+                byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+
+                using (var ms = new MemoryStream())
+                using (var cs = new CryptoStream(ms, tdes.CreateEncryptor(), CryptoStreamMode.Write))
+                {
+                    cs.Write(plainBytes, 0, plainBytes.Length);
+                    cs.FlushFinalBlock();
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
+        }
+
+        private byte[] PadPkcs7(byte[] data, int blockSize)
+        {
+            int padding = blockSize - (data.Length % blockSize);
+            byte[] padded = new byte[data.Length + padding];
+            Buffer.BlockCopy(data, 0, padded, 0, data.Length);
+
+            for (int i = data.Length; i < padded.Length; i++)
+                padded[i] = (byte)padding;
+
+            return padded;
         }
 
         private void EncryptDES_Click (object sender, RoutedEventArgs e)
@@ -349,7 +384,7 @@ namespace CryptoDemoWPF
 
         private void ProveTDES_Click(object sender, RoutedEventArgs e)
         {
-            string builtIn = EncryptTDES(txtInput.Text);
+            string builtIn = EncryptTDES_ECB_ForProof(txtInput.Text);
             string manual = EncryptTDES_Manual(txtInput.Text);
 
             txtOutput.Text = $"TDES Built-in:\n{builtIn}\n\nTDES Manual:\n{manual}\n\nEqual: {builtIn == manual}";
