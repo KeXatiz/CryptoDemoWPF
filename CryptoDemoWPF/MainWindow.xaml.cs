@@ -34,37 +34,44 @@ namespace CryptoDemoWPF
         // TDES uses 24-byte key (3 x DES keys)
         private readonly byte[] tdesKey = Encoding.UTF8.GetBytes("12345678ABCDEFGH87654321");
 
+        // Same block size as DES (8 bytes)
+        private readonly byte[] tdesIV = Encoding.UTF8.GetBytes("abcdefgh");
+
+
         byte[] k1 = Encoding.UTF8.GetBytes("12345678");
         byte[] k2 = Encoding.UTF8.GetBytes("ABCDEFGH");
         byte[] k3 = Encoding.UTF8.GetBytes("87654321");
 
-        // Same block size as DES (8 bytes)
-        private readonly byte[] tdesIV = Encoding.UTF8.GetBytes("abcdefgh");
+        
 
         public MainWindow()
         {
             InitializeComponent();
         }
 
-
+        //AES
         private string EncryptAES(string plainText)
         {
             using (Aes aes = Aes.Create())
             {
-                aes.Key = aesKey;
-                aes.IV = aesIV;
-                aes.Mode = CipherMode.CBC;
+                // Setting AES properties
+                aes.Key = aesKey;                                                                   // secret key => 16 bytes = 128-bit key => uses to encrypt & decrypt
+                aes.IV = aesIV;                                                                     // initialization Vector => Random starting block
+                aes.Mode = CipherMode.CBC;                                                          // Cipher Block Chaining - Each block depends on the previous block - Uses IV for the first block
                 aes.Padding = PaddingMode.PKCS7;
 
-                byte[] plainBytes =Encoding.UTF8.GetBytes(plainText);
+                byte[] plainBytes =Encoding.UTF8.GetBytes(plainText);   //abc ->   [61 62 63]       // convert to bytes as cryptography work on bytes
 
-                using (var ms = new MemoryStream())
-                using (var cs = new CryptoStream(ms,aes.CreateEncryptor(), CryptoStreamMode.Write))
+                using (var ms = new MemoryStream())    //1                                             // where encrypted bytes go
+                using (var cs = new CryptoStream(         //2                                          // when WRITE data to cs, encrypt it using AES and write the encrypted result into ms
+                    ms,
+                    aes.CreateEncryptor(),                                                          // aes.CreateEncryptor() - Creates an encryption transform using the configured Key, IV, cipher Mode, and Padding
+                    CryptoStreamMode.Write))                                                        // CryptoStreamMode.Write - we write input bytes (plaintext or ciphertext) into the CryptoStream, and the CryptoStream outputs transformed bytes (encrypted or decrypted) into the MemoryStream.
                 {
-                    cs.Write(plainBytes, 0, plainBytes.Length);
-                    cs.FlushFinalBlock();
+                    cs.Write(plainBytes, 0, plainBytes.Length); //3                                     // Send bytes into the AES encryption pipeline
+                    cs.FlushFinalBlock();                          //4                                 // No more data comming Adds padding (PKCS7) - Encrypts the final block
 
-                    return Convert.ToBase64String(ms.ToArray());
+                    return Convert.ToBase64String(ms.ToArray());      //5                              // convert encrypted bytes -> base 64
                 }
 
             }
@@ -84,34 +91,15 @@ namespace CryptoDemoWPF
                 using (var ms = new MemoryStream())
                     using (var cs = new CryptoStream(ms,aes.CreateDecryptor(), CryptoStreamMode.Write))
                 {
-                    cs.Write(cipherBytes, 0, cipherBytes.Length);
+                    cs.Write(cipherBytes, 0, cipherBytes.Length);                                           // cs will decrypt and store to memory stream
                     cs.FlushFinalBlock();
 
-                    return Encoding.UTF8.GetString(ms.ToArray());
+                    return Encoding.UTF8.GetString(ms.ToArray());                                          // encoding byte to text; vice versa
                 }
             }
         }
 
-        private string HashSHA256(string input)
-        {
-            using (SHA256 sha = SHA256.Create())
-            {
-                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
-                byte[] hashBytes = sha.ComputeHash(inputBytes);
-
-                // convert to Hex string
-                StringBuilder sb = new StringBuilder();
-                foreach (byte b in hashBytes)
-                {
-                    sb.Append(b.ToString("x2"));
-                }
-
-                return sb.ToString();
-
-                //Text → UTF-8 bytes → SHA-256 → 32 bytes → Hex string
-            }
-        }
-
+        //AES - click
         private void EncryptAES_Click(object sender, RoutedEventArgs e)
         {
             txtOutput.Text = EncryptAES(txtInput.Text);
@@ -129,21 +117,57 @@ namespace CryptoDemoWPF
             }
         }
 
+
+        // HASH
+        private string HashSHA256(string input)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+
+                // No key.
+                // No IV.
+                // No mode.
+
+                // Convert input text to UTF-8 bytes
+                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+
+                // Compute SHA-256 hash (always 32 bytes / 256 bits)
+                byte[] hashBytes = sha.ComputeHash(inputBytes);
+
+                // Convert binary hash to Base64 string (readable & safe for storage)
+                string hashBase64 = Convert.ToBase64String(hashBytes);
+
+                return hashBase64;
+
+                // Flow:
+                // Text → UTF-8 bytes → SHA-256 (32 bytes) → Base64 string
+            }
+        }
+        private void Hash_Click(object sender, RoutedEventArgs e)
+        {
+            txtOutput.Text = HashSHA256(txtInput.Text);  //(64 hex characters)
+        }
+
+
+
+        // HASH+SALT
         private string HashSHA256WithSalt(String input, string salt)
         {
             using (SHA256 sha = SHA256.Create())
             {
+                // Combine password + salt
                 byte[] combined = Encoding.UTF8.GetBytes(input + salt);
+
+                // Compute SHA-256 hash (32 bytes)
                 byte[] hashBytes = sha.ComputeHash(combined);
 
-                //return Convert.ToHexString(hashBytes);
-                StringBuilder sb = new StringBuilder();
-                foreach (byte b in hashBytes)
-                {
-                    sb.Append(b.ToString("x2"));
-                }
+                // Convert binary hash to Base64 string
+                string hashBase64 = Convert.ToBase64String(hashBytes);
 
-                return sb.ToString();
+                return hashBase64;
+
+                // Flow:
+                // (password + salt) → UTF-8 bytes → SHA-256 (32 bytes) → Base64 string
             }
         }
 
@@ -158,6 +182,17 @@ namespace CryptoDemoWPF
             return Convert.ToBase64String(saltBytes);
         }
 
+        private void HashSalt_Click(object sender, RoutedEventArgs e)
+        {
+            string salt = GenerateSalt();
+            string hash = HashSHA256WithSalt(txtInput.Text, salt);
+
+            txtOutput.Text = $"Salt:\n{salt}\n\nHash:\n{hash}";
+        }
+
+
+
+        //DES
         private string EncryptDES(string plainText)
         {
             using (DES des = DES.Create())
@@ -200,6 +235,24 @@ namespace CryptoDemoWPF
                 }
             }
         }
+
+        private void EncryptDES_Click(object sender, RoutedEventArgs e)
+        {
+            txtOutput.Text = EncryptDES(txtInput.Text);
+        }
+
+        private void DecryptDES_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                txtOutput.Text = DecryptDES(txtOutput.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Invalid DES ciphertext or key/IV mismatch");
+            }
+        }
+
 
 
         // TDES
@@ -246,6 +299,38 @@ namespace CryptoDemoWPF
             }
         }
 
+        private void EncryptTDES_Click(object sender, RoutedEventArgs e)
+        {
+            txtOutput.Text = EncryptTDES(txtInput.Text);
+        }
+
+        private void DecryptTDES_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                txtOutput.Text = DecryptTDES(txtOutput.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Invalid TDES ciphertext or key/IV mismatch");
+            }
+        }
+
+
+
+        
+
+        private byte[] PadPkcs7(byte[] data, int blockSize)
+        {
+            int padding = blockSize - (data.Length % blockSize);
+            byte[] padded = new byte[data.Length + padding];
+            Buffer.BlockCopy(data, 0, padded, 0, data.Length);
+
+            for (int i = data.Length; i < padded.Length; i++)
+                padded[i] = (byte)padding;
+
+            return padded;
+        }
 
         private byte[] DesEncryptBytes(byte[] data, byte[] key)
         {
@@ -288,26 +373,15 @@ namespace CryptoDemoWPF
         }
 
 
-        private string EncryptTDES_Manual(string plainText)
-        {
-            byte[] data = Encoding.UTF8.GetBytes(plainText);
 
-            // PAD ONCE
-            data = PadPkcs7(data, 8);
-
-            byte[] step1 = DesEncryptBytes(data, k1);   // E(K1)
-            byte[] step2 = DesDecryptBytes(step1, k2);  // D(K2)
-            byte[] step3 = DesEncryptBytes(step2, k3);  // E(K3)
-
-            return Convert.ToBase64String(step3);
-        }
-
+        // TDES = 3 DES
         private string EncryptTDES_ECB_ForProof(string plainText)
         {
             using (TripleDES tdes = TripleDES.Create())
             {
                 tdes.Key = tdesKey;
-                tdes.Mode = CipherMode.ECB;   
+                // no IV because ECB didnt use 
+                tdes.Mode = CipherMode.ECB;
                 tdes.Padding = PaddingMode.PKCS7;
 
                 byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
@@ -322,65 +396,19 @@ namespace CryptoDemoWPF
             }
         }
 
-        private byte[] PadPkcs7(byte[] data, int blockSize)
+        private string EncryptTDES_Manual(string plainText)
         {
-            int padding = blockSize - (data.Length % blockSize);
-            byte[] padded = new byte[data.Length + padding];
-            Buffer.BlockCopy(data, 0, padded, 0, data.Length);
+            byte[] data = Encoding.UTF8.GetBytes(plainText);
 
-            for (int i = data.Length; i < padded.Length; i++)
-                padded[i] = (byte)padding;
+            // PAD ONCE
+            data = PadPkcs7(data, 8);                   // why 8 because 8 bytes (des) [61 62 63] -> PKCS7 padding -> [61 62 63 05 05 05 05 05]
 
-            return padded;
+            byte[] step1 = DesEncryptBytes(data, k1);   // Encrypt(K1)
+            byte[] step2 = DesDecryptBytes(step1, k2);  // Decrypt(K2)
+            byte[] step3 = DesEncryptBytes(step2, k3);  // Encrypt(K3)
+
+            return Convert.ToBase64String(step3);
         }
-
-        private void EncryptDES_Click (object sender, RoutedEventArgs e)
-        {
-            txtOutput.Text = EncryptDES(txtInput.Text);
-        }
-
-        private void DecryptDES_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                txtOutput.Text = DecryptDES(txtOutput.Text);
-            }
-            catch
-            {
-                MessageBox.Show("Invalid DES ciphertext or key/IV mismatch");
-            }
-        }
-
-        private void Hash_Click(object sender, RoutedEventArgs e)
-        {
-            txtOutput.Text = HashSHA256(txtInput.Text);  //(64 hex characters)
-        }
-
-        private void HashSalt_Click(object sender, RoutedEventArgs e)
-        {
-            string salt = GenerateSalt();
-            string hash = HashSHA256WithSalt(txtInput.Text, salt);
-
-            txtOutput.Text = $"Salt:\n{salt}\n\nHash:\n{hash}";
-        }
-
-        private void EncryptTDES_Click(object sender, RoutedEventArgs e)
-        {
-            txtOutput.Text = EncryptTDES(txtInput.Text);
-        }
-
-        private void DecryptTDES_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                txtOutput.Text = DecryptTDES(txtOutput.Text);
-            }
-            catch
-            {
-                MessageBox.Show("Invalid TDES ciphertext or key/IV mismatch");
-            }
-        }
-
 
         private void ProveTDES_Click(object sender, RoutedEventArgs e)
         {
